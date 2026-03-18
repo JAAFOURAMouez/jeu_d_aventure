@@ -16,16 +16,17 @@ public class Equipement {
     private final Map<SlotEquipement, Objet> slots = new HashMap<>();
 
     public Equipement() {
-        slots.put(SlotEquipement.TETE,        null);
-        slots.put(SlotEquipement.MAIN_DROITE,  null);
-        slots.put(SlotEquipement.MAIN_GAUCHE,  null);
-        slots.put(SlotEquipement.CORPS,        null);
-        slots.put(SlotEquipement.PIEDS,        null);
+        slots.put(SlotEquipement.TETE, null);
+        slots.put(SlotEquipement.MAIN_DROITE, null);
+        slots.put(SlotEquipement.MAIN_GAUCHE, null);
+        slots.put(SlotEquipement.CORPS, null);
+        slots.put(SlotEquipement.PIEDS, null);
     }
 
     /** Retourne l'objet dans un slot (null si vide). */
     public Objet getSlot(SlotEquipement s) {
-        if (s == SlotEquipement.MAIN_GAUCHE && armeDeuixMains != null) return armeDeuixMains;
+        if (s == SlotEquipement.MAIN_GAUCHE && armeDeuixMains != null)
+            return armeDeuixMains;
         return slots.get(s);
     }
 
@@ -36,8 +37,11 @@ public class Equipement {
 
     /**
      * Équipe un objet.
-     * @return l'objet précédemment en place (à remettre en inventaire), null si le slot était vide.
-     * @throws IllegalArgumentException si l'objet n'est pas équipable ou si le type de slot est invalide.
+     * 
+     * @return l'objet précédemment en place (à remettre en inventaire), null si le
+     *         slot était vide.
+     * @throws IllegalArgumentException si l'objet n'est pas équipable ou si le type
+     *                                  de slot est invalide.
      */
     public Objet equiper(Objet objet) {
         SlotEquipement cible = objet.getSlot();
@@ -50,7 +54,8 @@ public class Equipement {
         if (objet.isDeuxMains()) {
             // Arme 2H : occupe la main droite et bloque la gauche
             ancien = slots.get(SlotEquipement.MAIN_DROITE);
-            // Si une arme occupait la main gauche, on la retourne aussi (on prend l'ancien MG d'abord)
+            // Si une arme occupait la main gauche, on la retourne aussi (on prend l'ancien
+            // MG d'abord)
             // Pour simplifier, la main gauche sera libérée silencieusement si occupée.
             slots.put(SlotEquipement.MAIN_DROITE, objet);
             armeDeuixMains = objet;
@@ -74,6 +79,7 @@ public class Equipement {
 
     /**
      * Déséquipe l'objet dans un slot donné.
+     * 
      * @return l'objet retiré, null si le slot était vide.
      */
     public Objet desequiper(SlotEquipement s) {
@@ -95,23 +101,27 @@ public class Equipement {
         int total = 0;
         Objet md = slots.get(SlotEquipement.MAIN_DROITE);
         Objet mg = slots.get(SlotEquipement.MAIN_GAUCHE);
-        if (md != null && md.estArme()) total += md.getDegats();
-        if (armeDeuixMains == null && mg != null && mg.estArme()) total += mg.getDegats();
+        if (md != null && md.estArme())
+            total += md.getDegats();
+        if (armeDeuixMains == null && mg != null && mg.estArme())
+            total += mg.getDegats();
         return total;
     }
 
     /** Résumé de l'équipement actuel. */
     public String resume() {
         StringBuilder sb = new StringBuilder();
-        for (SlotEquipement s : new SlotEquipement[]{
+        for (SlotEquipement s : new SlotEquipement[] {
                 SlotEquipement.TETE, SlotEquipement.MAIN_DROITE,
-                SlotEquipement.MAIN_GAUCHE, SlotEquipement.CORPS, SlotEquipement.PIEDS}) {
+                SlotEquipement.MAIN_GAUCHE, SlotEquipement.CORPS, SlotEquipement.PIEDS }) {
 
             Objet o = getSlot(s);
-            String nom   = o != null ? o.getNom() : "(vide)";
+            String nom = o != null ? o.getNom() : "(vide)";
             String extra = "";
-            if (s == SlotEquipement.MAIN_DROITE && armeDeuixMains != null) extra = " [2 mains]";
-            if (s == SlotEquipement.MAIN_GAUCHE && armeDeuixMains != null) extra = " [bloquée]";
+            if (s == SlotEquipement.MAIN_DROITE && armeDeuixMains != null)
+                extra = " [2 mains]";
+            if (s == SlotEquipement.MAIN_GAUCHE && armeDeuixMains != null)
+                extra = " [bloquée]";
             sb.append(s.icone).append(" ").append(s.libelle).append(" : ").append(nom).append(extra).append("\n");
         }
         return sb.toString();

@@ -268,9 +268,10 @@ public class Monde extends Sujet {
             return;
         }
 
-        cible.setPointsDeVie(cible.getPointsDeVie() - 10);
-        ajouterMessage("Vous attaquez " + cible.getNom() + " et infligez 10 dégâts.");
-
+        // Calculer les dégâts totaux (10 de base + dégâts de l'arme équipée)
+        int degatsInfliges = 10 + joueur.getEquipement().getDegatsTotal();
+        cible.setPointsDeVie(cible.getPointsDeVie() - degatsInfliges);
+        ajouterMessage("Vous attaquez " + cible.getNom() + " et infligez " + degatsInfliges + " dégâts.");
         if (cible.getPointsDeVie() <= 0) {
             ajouterMessage(cible.getNom() + " a été vaincu !");
 
@@ -380,6 +381,7 @@ public class Monde extends Sujet {
 
     /**
      * Le joueur achète un objet au Marchand.
+     * 
      * @param marchand le PNJ Marchand
      * @param nomObjet le nom de l'objet à acheter
      */
@@ -396,7 +398,8 @@ public class Monde extends Sujet {
             return;
         }
         if (joueur.getOr() < cible.getPrix()) {
-            ajouterMessage("Vous n'avez pas assez d'or ! (besoin : " + cible.getPrix() + " 🪙, vous avez : " + joueur.getOr() + " 🪙)");
+            ajouterMessage("Vous n'avez pas assez d'or ! (besoin : " + cible.getPrix() + " 🪙, vous avez : "
+                    + joueur.getOr() + " 🪙)");
             return;
         }
         if (!joueur.getInventaire().ajouter(cible)) {
@@ -405,11 +408,13 @@ public class Monde extends Sujet {
         }
         marchand.getInventaire().retirer(cible);
         joueur.setOr(joueur.getOr() - cible.getPrix());
-        ajouterMessage("Vous achetez « " + cible.getNom() + " » pour " + cible.getPrix() + " 🪙. Or restant : " + joueur.getOr() + " 🪙");
+        ajouterMessage("Vous achetez « " + cible.getNom() + " » pour " + cible.getPrix() + " 🪙. Or restant : "
+                + joueur.getOr() + " 🪙");
     }
 
     /**
      * Le joueur vend un objet au Marchand.
+     * 
      * @param marchand le PNJ Marchand
      * @param nomObjet le nom de l'objet à vendre
      */
@@ -429,7 +434,8 @@ public class Monde extends Sujet {
         joueur.getInventaire().retirer(cible);
         marchand.getInventaire().ajouter(cible);
         joueur.setOr(joueur.getOr() + prixVente);
-        ajouterMessage("Vous vendez « " + cible.getNom() + " » pour " + prixVente + " 🪙. Or total : " + joueur.getOr() + " 🪙");
+        ajouterMessage("Vous vendez « " + cible.getNom() + " » pour " + prixVente + " 🪙. Or total : " + joueur.getOr()
+                + " 🪙");
     }
 
     /**
@@ -455,14 +461,14 @@ public class Monde extends Sujet {
         int cout = 20 * (arme.getNiveau() + 1);
         if (joueur.getOr() < cout) {
             ajouterMessage("Pas assez d'or pour améliorer " + arme.getNom()
-                + " ! (besoin : " + cout + " 🪙, vous avez : " + joueur.getOr() + " 🪙)");
+                    + " ! (besoin : " + cout + " 🪙, vous avez : " + joueur.getOr() + " 🪙)");
             return;
         }
         joueur.setOr(joueur.getOr() - cout);
         arme.setNiveau(arme.getNiveau() + 1);
         arme.setDegats(arme.getDegats() + 5);
         ajouterMessage("⚒ " + arme.getNom() + " améliorée au niveau +" + arme.getNiveau()
-            + " ! (" + arme.getDegats() + " dégâts). Or restant : " + joueur.getOr() + " 🪙");
+                + " ! (" + arme.getDegats() + " dégâts). Or restant : " + joueur.getOr() + " 🪙");
     }
 
     /**
@@ -472,7 +478,10 @@ public class Monde extends Sujet {
     public void equiper(String nomObjet) {
         Objet cible = null;
         for (Objet o : joueur.getInventaire().getObjets()) {
-            if (o.getNom().equalsIgnoreCase(nomObjet)) { cible = o; break; }
+            if (o.getNom().equalsIgnoreCase(nomObjet)) {
+                cible = o;
+                break;
+            }
         }
         if (cible == null) {
             ajouterMessage("Vous ne possédez pas cet objet.");
@@ -485,13 +494,20 @@ public class Monde extends Sujet {
         try {
             joueur.getInventaire().retirer(cible);
             Objet ancien = joueur.getEquipement().equiper(cible);
+
             if (ancien != null) {
                 joueur.getInventaire().ajouter(ancien);
+                // Retirer le bonus PV de l'ancien objet
+                joueur.setPointsDeVie(joueur.getPointsDeVie() - ancien.getBonusPV());
                 ajouterMessage("Vous remplacez « " + ancien.getNom() + " » par « " + cible.getNom() + " ».");
             } else {
                 ajouterMessage("Vous équipez : " + cible.getNom()
-                    + (cible.isDeuxMains() ? " [arme à 2 mains]" : "") + ".");
+                        + (cible.isDeuxMains() ? " [arme à 2 mains]" : "") + ".");
             }
+
+            // Ajouter le bonus PV du nouvel objet
+            joueur.setPointsDeVie(joueur.getPointsDeVie() + cible.getBonusPV());
+
         } catch (IllegalArgumentException ex) {
             joueur.getInventaire().ajouter(cible); // remettre en inventaire si erreur
             ajouterMessage("⚠ " + ex.getMessage());
@@ -507,6 +523,8 @@ public class Monde extends Sujet {
             ajouterMessage("Aucun objet dans cet emplacement.");
         } else {
             if (joueur.getInventaire().ajouter(retiré)) {
+                // On retire les PV bonus conférés par l'objet enlevé
+                joueur.setPointsDeVie(joueur.getPointsDeVie() - retiré.getBonusPV());
                 ajouterMessage("Vous déséquipez : " + retiré.getNom() + ".");
             } else {
                 // Inventaire plein : remettre l'objet dans l'équipement
